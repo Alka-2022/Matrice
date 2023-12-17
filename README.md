@@ -52,6 +52,6 @@ npm start
 npm start
 ```
 
-##Open your browser and visit http://localhost:3000 to access the application
+Open your browser and visit http://localhost:3000 to access the application
 
 
