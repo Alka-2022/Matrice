@@ -1,15 +1,18 @@
 // server.js
+
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
-require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const mongoConnectionString = 'mongodb+srv://ralka4776:TMRsa4M5wnRfTl29@alka.v2142kr.mongodb.net/';
+
+mongoose.connect(mongoConnectionString, { useNewUrlParser: true, useUnifiedTopology: true });
+
 mongoose.connection.once('open', () => {
     console.log('Connected to MongoDB Atlas');
 });
@@ -90,12 +93,38 @@ app.get('/interviews/:userId', async (req, res) => {
     try {
         const userId = req.params.userId;
         const user = await User.findById(userId);
-
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
         res.status(200).json({ interviews: user.interviews });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add this route to handle DELETE requests for deleting interviews
+app.delete('/deleteInterview/:userId/:interviewId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const interviewId = req.params.interviewId;
+
+        console.log(`Deleting interview with ID: ${interviewId} for user with ID: ${userId}`);
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log(`User's interviews before deletion: ${JSON.stringify(user.interviews)}`);
+
+        user.interviews = user.interviews.filter(interview => interview._id.toString() !== interviewId);
+
+        console.log(`User's interviews after deletion: ${JSON.stringify(user.interviews)}`);
+
+        await user.save();
+
+        res.status(200).json({ message: 'Interview deleted successfully', user });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

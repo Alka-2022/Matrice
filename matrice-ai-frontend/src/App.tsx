@@ -1,7 +1,10 @@
-// App.tsx
+// App.js
+
 import React, { useState, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
 import InterviewTable from './InterviewTable';
+
+import './styles.css'; // Import your CSS file
 
 const App: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -22,14 +25,8 @@ const App: React.FC = () => {
 
     const fetchInterviews = async () => {
         try {
-            console.log('User ID:', loggedInUser._id);
-
-            if (loggedInUser && loggedInUser._id) {
-                const response = await axios.get(`http://localhost:5000/interviews/${loggedInUser._id}`);
-                setInterviews(response.data.interviews);
-            } else {
-                // Handle the case where loggedInUser or loggedInUser._id is null
-            }
+            const response = await axios.get(`http://localhost:5000/interviews/${loggedInUser._id}`);
+            setInterviews(response.data.interviews);
         } catch (error: any) {
             console.error((error as AxiosError).response?.data);
         }
@@ -63,15 +60,19 @@ const App: React.FC = () => {
                 rating: interviewRating,
             });
             console.log(response.data);
-
             // After adding the interview, fetch the updated interviews
-            await fetchInterviews(); // Wait for fetchInterviews to complete
+            fetchInterviews();
+        } catch (error: any) {
+            console.error((error as AxiosError).response?.data);
+        }
+    };
 
-            // Clear the input fields after adding the interview
-            setInterviewName('');
-            setInterviewStatus('');
-            setInterviewFeedback('');
-            setInterviewRating(undefined);
+    const handleDeleteInterview = async (userId: string, interviewId: string) => {
+        console.log(`Deleting interview with ID: ${interviewId} for user with ID: ${userId}`);
+        try {
+            const response = await axios.delete(`http://localhost:5000/deleteInterview/${userId}/${interviewId}`);
+            console.log(response.data);
+            fetchInterviews();
         } catch (error: any) {
             console.error((error as AxiosError).response?.data);
         }
@@ -79,13 +80,13 @@ const App: React.FC = () => {
 
     if (!loggedInUser) {
         return (
-            <div>
+            <div className="login-container">
                 <h1>Matrice AI Full Stack</h1>
-                <div>
+                <div className="form-group">
                     <label>Username:</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
                 </div>
-                <div>
+                <div className="form-group">
                     <label>Password:</label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
@@ -96,34 +97,39 @@ const App: React.FC = () => {
     }
 
     return (
-        <div>
-            <h1>Welcome, {loggedInUser.username}!</h1>
-            <div>
-                <label>Interview Name:</label>
-                <input type="text" value={interviewName} onChange={(e) => setInterviewName(e.target.value)} />
-            </div>
-            <div>
-                <label>Interview Status:</label>
-                <input type="text" value={interviewStatus} onChange={(e) => setInterviewStatus(e.target.value)} />
-            </div>
-            <div>
-                <label>Interview Feedback:</label>
-                <input type="text" value={interviewFeedback} onChange={(e) => setInterviewFeedback(e.target.value)} />
-            </div>
-            <div>
-                <label>Interview Rating:</label>
-                <input
-                    type="number"
-                    value={interviewRating || ''}
-                    onChange={(e) => setInterviewRating(Number(e.target.value))}
-                />
-            </div>
-            <button onClick={handleAddInterview}>Add Interview</button>
-
-            {/* Display the interview details in a table */}
-            <InterviewTable interviews={interviews} />
-        </div>
-    );
+      <div className="app-container">
+          <h1>Welcome, {loggedInUser.username}!</h1>
+          <div className="form-container">
+              <div className="form-group">
+                  <label>Interview Name:</label>
+                  <input type="text" value={interviewName} onChange={(e) => setInterviewName(e.target.value)} />
+              </div>
+              <div className="form-group">
+                  <label>Interview Status:</label>
+                  <input type="text" value={interviewStatus} onChange={(e) => setInterviewStatus(e.target.value)} />
+              </div>
+              <div className="form-group">
+                  <label>Interview Feedback:</label>
+                  <input type="text" value={interviewFeedback} onChange={(e) => setInterviewFeedback(e.target.value)} />
+              </div>
+              <div className="form-group">
+                  <label>Interview Rating:</label>
+                  <input
+                      type="number"
+                      value={interviewRating || ''}
+                      onChange={(e) => setInterviewRating(Number(e.target.value))}
+                  />
+              </div>
+              <button onClick={handleAddInterview}>Add Interview Status</button>
+          </div>
+  
+          {interviews.length > 0 && (
+              <div className="interview-table-container">
+                  <InterviewTable interviews={interviews} userId={loggedInUser._id} onDeleteInterview={handleDeleteInterview} />
+              </div>
+          )}
+      </div>
+  );
 };
 
 export default App;
